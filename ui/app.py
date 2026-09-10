@@ -16,34 +16,37 @@ HTML_TEMPLATE = r"""
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OS Memory & Paging Simulator</title>
+    <title>Memory & Paging Optimization Subsystem</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 30px; background: #0f172a; color: #f8fafc; }
         h1 { color: #38bdf8; margin-bottom: 5px; }
         .subtitle { color: #94a3b8; margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 20px; }
-        label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-top: 10px; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; box-sizing: border-box; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 8px; border-radius: 4px; }
-        button { margin-top: 15px; width: 100%; background: #0284c7; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+        h2 { color: #f1f5f9; margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-top: 14px; margin-bottom: 6px; }
+        input, select, textarea { width: 100%; box-sizing: border-box; background: #0f172a; border: 1px solid #475569; color: #fff; padding: 10px; border-radius: 4px; font-size: 13px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #38bdf8; }
+        button { margin-top: 18px; width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: 600; cursor: pointer; transition: background 0.2s; font-size: 14px; }
         button:hover { background: #0369a1; }
-        pre { background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 6px; overflow-x: auto; color: #a5f3fc; font-size: 12px; max-height: 400px; }
+        pre { background: #0f172a; border: 1px solid #334155; padding: 14px; border-radius: 6px; overflow-x: auto; color: #a5f3fc; font-size: 12px; max-height: 480px; }
     </style>
 </head>
 <body>
-    <h1>OS Resource Management & Optimization Platform</h1>
-    <div class="subtitle">Member 2: Memory Allocation & Page Replacement Engine</div>
+    <h1>Memory Management & Virtual Memory Subsystem</h1>
+    <div class="subtitle">Contiguous Allocation Strategies & Custom $O(1)$ LRU Page Replacement Engine</div>
 
     <div class="grid">
+        <!-- 1. Contiguous Memory Allocation Card -->
         <div class="card">
-            <h2>Contiguous Allocation</h2>
+            <h2>Contiguous Allocation Simulator</h2>
             <label>Partition Sizes (comma-separated)</label>
             <input id="partitions" value="100, 500, 200, 300, 600">
 
             <label>Requests (PID:Size, comma or newline separated)</label>
             <textarea id="requests" rows="4">P1:212, P2:417, P3:112, P4:426</textarea>
 
-            <label>Policy</label>
+            <label>Allocation Policy</label>
             <select id="allocAlgo">
                 <option value="First Fit">First Fit</option>
                 <option value="Best Fit">Best Fit</option>
@@ -56,6 +59,7 @@ HTML_TEMPLATE = r"""
             <div id="allocOutput" style="margin-top: 15px;"></div>
         </div>
 
+        <!-- 2. Virtual Memory Page Replacement Card -->
         <div class="card">
             <h2>Page Replacement Simulator</h2>
             <label>Frame Capacity</label>
@@ -64,10 +68,10 @@ HTML_TEMPLATE = r"""
             <label>Reference String (comma-separated)</label>
             <input id="refString" value="7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2">
 
-            <label>Algorithm</label>
+            <label>Replacement Algorithm</label>
             <select id="pagingAlgo">
                 <option value="FIFO">FIFO</option>
-                <option value="LRU">LRU (HashTable + DLL)</option>
+                <option value="LRU">LRU (Custom HashTable + DLL)</option>
                 <option value="Compare Both">Compare Both</option>
             </select>
 
@@ -77,9 +81,10 @@ HTML_TEMPLATE = r"""
     </div>
 
     <script>
+        // --- CONTIGUOUS ALLOCATION HANDLER ---
         document.getElementById('btnAlloc').addEventListener('click', async () => {
             const out = document.getElementById('allocOutput');
-            out.innerHTML = '<span style="color:#94a3b8">Computing...</span>';
+            out.innerHTML = '<span style="color:#94a3b8">Allocating memory...</span>';
             try {
                 const partitions = document.getElementById('partitions').value
                     .split(',')
@@ -112,9 +117,10 @@ HTML_TEMPLATE = r"""
             }
         });
 
+        // --- PAGE REPLACEMENT HANDLER ---
         document.getElementById('btnPaging').addEventListener('click', async () => {
             const out = document.getElementById('pagingOutput');
-            out.innerHTML = '<span style="color:#94a3b8">Computing...</span>';
+            out.innerHTML = '<span style="color:#94a3b8">Simulating Paging...</span>';
             try {
                 const capacity = parseInt(document.getElementById('capacity').value);
                 const refString = document.getElementById('refString').value
@@ -143,6 +149,7 @@ HTML_TEMPLATE = r"""
 def index():
     return render_template_string(HTML_TEMPLATE)
 
+# --- CONTIGUOUS ALLOCATION ROUTE ---
 @app.route("/api/allocate", methods=["POST"])
 def api_allocate():
     data = request.get_json() or {}
@@ -156,6 +163,7 @@ def api_allocate():
     allocator = MemoryAllocator(partitions)
     return jsonify(allocator.run_simulation(algo, requests))
 
+# --- PAGE REPLACEMENT ROUTE ---
 @app.route("/api/paging", methods=["POST"])
 def api_paging():
     data = request.get_json() or {}
